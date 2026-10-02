@@ -2,6 +2,26 @@
 
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.1.0] - 2026-10-03
+
+### 新增
+
+- **「打开完整 UI」按钮一键启动外部服务器**：按钮不再打开一个大概率连不上的
+  地址，而是先 `POST /dsh-config-manager/api/serve` 请宿主半区把外部 UI 拉起来，
+  拿到带 token 的 URL 再打开。浏览器无法执行本机 `.bat`，所以拉起进程这件事
+  只能由宿主半区做。
+  - 幂等：已在跑就直接回地址，不会重复启动第二个服务器。
+  - 分离进程（`detached` + `stdio:'ignore'` + `unref`），外部 UI 比 DSH 活得久。
+  - 可执行文件优先级：DSH 自带运行时 → Electron 自身（`ELECTRON_RUN_AS_NODE=1`）
+    → PATH 里的 `node`。
+  - 启动后**等 `/ping` 就绪**再返回；超时返回 `ok:false` 加可读原因，不谎报成功。
+  - 新增 `lib/spawn-serve.mjs`（零依赖）与 `test/spawn-serve.test.mjs`（36 项断言）。
+- `dcm.mjs serve --no-open`：供宿主分离式拉起时抑制重复弹浏览器（默认行为不变）。
+
+### 变更
+
+- 面板底部的提示文案改为说明按钮会自己拉起服务器，不再要求先跑 `dcm.bat`。
+
 ## [1.0.0] - 2026-10-03
 
 首个公开版本。

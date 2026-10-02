@@ -1,6 +1,6 @@
 {
   "name": "dsh-config-manager",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "DSH 配置版本管理、健康诊断、崩溃恢复与会话文件修复。外部 Web UI + 页面内入口，零依赖。",
   "keywords": [
     "dsh",

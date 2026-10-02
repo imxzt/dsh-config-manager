@@ -235,6 +235,15 @@ test/             自测（216 个断言）
 
 **方案 1 的取舍**：面板只是摘要，完整 UI 在外部服务器。因为 DSH 崩溃时页面内插件根本加载不了，而崩溃恢复恰恰是那时唯一需要的东西——把完整 UI 写两遍必然漂移。
 
+**「打开完整 UI」按钮会自己把服务器拉起来。** 浏览器**不能**执行本机 `.bat`（`window.open('file:///…/dcm.bat')` 只会下载或报错），所以按钮的动作是：
+
+1. `POST /dsh-config-manager/api/serve` 请宿主半区把外部 UI 拉起来（`lib/spawn-serve.mjs`）；
+2. 拿到返回的**带 token 地址**再 `window.open`。
+
+因此**不需要**先手动跑 `dcm.bat serve`。该调用是幂等的：已在跑就直接回地址，不会重复启动第二个服务器。`dcm.bat` 仍然保留——DSH 完全起不来时，它是唯一能用的入口。
+
+启动用分离进程（`detached` + `stdio:'ignore'` + `unref`），所以外部 UI 比 DSH 活得久；可执行文件优先用 DSH 自带运行时，其次 Electron 自身（`ELECTRON_RUN_AS_NODE=1`），最后 PATH 里的 `node`。
+
 **安装**（用脚本，**不要**用 `pnpm add`）：
 
 ```powershell

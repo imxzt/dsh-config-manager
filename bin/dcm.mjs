@@ -271,7 +271,11 @@ switch (command) {
   case 'serve': {
     const { startServer } = await import('../lib/server.mjs')
     const port = Number(flags.port ?? 14711)
-    await startServer({ ctx, port, open: flags.open !== false })
+    // `--no-open` 供宿主半区分离式拉起时使用（那边由浏览器自己开带 token 的
+    // URL，服务端再弹一次会开出无 token 的第二个标签页）。默认仍开浏览器，
+    // 保持双击 dcm.bat 的既有行为。
+    const open = flags.open !== false && flags['no-open'] !== true
+    await startServer({ ctx, port, open })
     break
   }
 
