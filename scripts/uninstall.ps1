@@ -44,8 +44,9 @@ Write-Host "== dsh-config-manager uninstall =="
 if (-not (Test-Path -LiteralPath $manifestPath)) { throw "找不到: $manifestPath" }
 
 # 找 node：优先 DSH 内置运行时，其次 PATH（不写死运行时目录名）。
-function Find-Node([string]$Home) {
-  $runtimes = Join-Path $Home 'dsh-runtimes'
+# 参数名不能用 $Home —— PowerShell 只读自动变量。
+function Find-Node([string]$DshRoot) {
+  $runtimes = Join-Path $DshRoot 'dsh-runtimes'
   if (Test-Path -LiteralPath $runtimes) {
     foreach ($d in Get-ChildItem -LiteralPath $runtimes -Directory -ErrorAction SilentlyContinue) {
       $cand = Join-Path $d.FullName 'dependencies\node\bin\node.exe'
