@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DSH 配置管理</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="dot" id="healthDot" title="健康状态"></span>
+    <h1>DSH 配置管理</h1>
+  </div>
+  <div class="meta" id="meta"></div>
+  <button class="ghost" id="refreshBtn" title="重新读取">刷新</button>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab active" data-view="overview">总览</button>
+  <button class="tab" data-view="health">健康诊断</button>
+  <button class="tab" data-view="plugins">插件</button>
+  <button class="tab" data-view="versions">版本与还原点</button>
+  <button class="tab" data-view="sessions">会话文件</button>
+</nav>
+
+<main id="main">
+  <section class="view" data-view="overview">
+    <div id="crashBanner"></div>
+    <div class="grid" id="overviewCards"></div>
+  </section>
+
+  <section class="view hidden" data-view="health">
+    <div class="row-head">
+      <h2>健康诊断</h2>
+      <button class="ghost" id="healthRefresh">重新检查</button>
+    </div>
+    <div id="healthBody" class="stack"></div>
+  </section>
+
+  <section class="view hidden" data-view="plugins">
+    <div class="row-head">
+      <h2>插件</h2>
+      <div class="actions">
+        <button class="ghost" id="pluginsRefresh">重新读取</button>
+        <button class="danger" id="neutralizeBtn">摘除不可解析 bundle</button>
+      </div>
+    </div>
+    <div id="preflightBox"></div>
+    <div id="pluginList" class="stack"></div>
+  </section>
+
+  <section class="view hidden" data-view="versions">
+    <div class="row-head">
+      <h2>版本与还原点</h2>
+      <div class="actions">
+        <input id="saveMsg" type="text" placeholder="还原点说明（可选）">
+        <button class="primary" id="saveBtn">保存还原点</button>
+      </div>
+    </div>
+    <div id="changesBox"></div>
+    <div id="commitList" class="stack"></div>
+    <div id="diffBox"></div>
+  </section>
+
+  <section class="view hidden" data-view="sessions">
+    <div class="row-head">
+      <h2>会话文件</h2>
+      <div class="actions">
+        <button class="ghost" id="scanBtn">扫描</button>
+        <button class="ghost" id="fixDryBtn">试修（不落盘）</button>
+        <button class="danger" id="fixBtn">修复</button>
+      </div>
+    </div>
+    <div id="sessionSummary" class="muted"></div>
+    <div id="sessionList" class="stack"></div>
+  </section>
+</main>
+
+<div id="toast" class="toast hidden"></div>
+<div id="modal" class="modal hidden"><div class="modal-box"><div id="modalBody"></div><div class="modal-foot"><button class="ghost" id="modalClose">关闭</button></div></div></div>
+
+<script src="/app.js"></script>
+</body>
+</html>

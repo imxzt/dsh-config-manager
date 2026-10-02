@@ -1,0 +1,22 @@
+# 运行时产物与本地状态（绝不入库）
+.token
+*.log
+
+# 用户自己的诊断数据（若在本目录下测试过）
+undo/
+undo-snapshots/
+backups/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+desktop.ini
+
+# 依赖（本项目零依赖，但防手滑）
+node_modules/
+
+# 测试产生的临时目录
+test/tmp/
+*.tmp

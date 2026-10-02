@@ -1,0 +1,11 @@
+# dsh-config-manager bundle patch layer
+#
+# 这个包作为 **selected profile bundle** 挂载：profile 的 package.json 里
+# `dsh.profile.bundles` 含 "dsh-config-manager" 时，boot 会合并本文件，
+# 由下面这一行完成挂载。
+#
+# **不要在 profile 的 cordis.patch.yml 里再加一条 insert 行**——那会导致
+# 重复挂载，组合期会因路由重复注册而失败。
+- insert:
+    - id: dsh-config-manager
+      name: 'dsh-config-manager'

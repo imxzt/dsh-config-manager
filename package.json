@@ -1,0 +1,72 @@
+{
+  "name": "dsh-config-manager",
+  "version": "1.0.0",
+  "description": "DSH 配置版本管理、健康诊断、崩溃恢复与会话文件修复。外部 Web UI + 页面内入口，零依赖。",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "dsh-plugin",
+    "backup",
+    "rollback",
+    "config-manager",
+    "crash-recovery"
+  ],
+  "license": "MIT",
+  "author": "imxzt",
+  "homepage": "https://github.com/imxzt/dsh-config-manager#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imxzt/dsh-config-manager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/imxzt/dsh-config-manager/issues"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node test/run.mjs",
+    "health": "node bin/dcm.mjs health",
+    "preflight": "node bin/dcm.mjs preflight",
+    "serve": "node bin/dcm.mjs serve"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-sidebar",
+        "@deepseek-ai/dsh-client-ui-layout"
+      ],
+      "platform": "web"
+    },
+    "manifestVersion": 1
+  },
+  "icon": "./icon.png",
+  "files": [
+    "lib/",
+    "bin/",
+    "webui/",
+    "scripts/",
+    "test/",
+    "cordis.patch.yml",
+    "dcm.bat",
+    "dcm.sh",
+    "icon.png",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ]
+}
