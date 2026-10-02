@@ -22,18 +22,30 @@
 
 ## 安装
 
-### 方式一：让 DSH 自己装（推荐，最简单）
+### 方式一：用 dsh 装（推荐，最简单）
 
 ```bash
-dsh plugin add github:<你的用户名>/dsh-config-manager
+dsh plugin add github:imxzt/dsh-config-manager --profile desktop
 ```
 
-DSH 的插件管理器会拉取仓库、登记为 profile bundle、并处理依赖。
+`--profile` 是必需的（DSH CLI 不提供默认值）。把 `desktop` 换成你要装的 profile 名。
+
+这一条命令会自动完成三件事（实测验证）：
+
+1. 从 GitHub 拉取仓库到 `<profile>/node_modules/dsh-config-manager`
+2. 写入 `dependencies`：`"dsh-config-manager": "github:imxzt/dsh-config-manager"`
+3. **自动加入 `dsh.profile.bundles`** —— 这一步是它出现在 Plugins 页、且 boot 合并
+   本包 `cordis.patch.yml` 的前提
+
+装完重启 DSH（或 profile 开了 HMR 则自动重组）即可在侧栏看到「配置管理」入口。
+
+> 实测于 DSH 0.2.0-rc.2 + pnpm 11.7.0：安装耗时约 5 秒，落盘为**目录联接**
+> （不是实体副本，所以改源码即时生效），BOM、测试、webui 全部完整。
 
 ### 方式二：克隆 + 安装脚本（可控性最好）
 
 ```bash
-git clone https://github.com/<你的用户名>/dsh-config-manager.git ~/.dsh/plugins/dsh-config-manager
+git clone https://github.com/imxzt/dsh-config-manager.git ~/.dsh/plugins/dsh-config-manager
 cd ~/.dsh/plugins/dsh-config-manager
 ```
 
@@ -44,7 +56,13 @@ Windows：
 .\scripts\install.ps1 -Profile web    # 指定 profile
 ```
 
-macOS / Linux（手动建联接，或参考脚本逻辑）：
+这个脚本与方式一的区别：
+
+- **不走 pnpm** —— 只建目录联接 + 改 manifest 两个字段，不动 lockfile、不动其它依赖
+- **装前自动打还原点、装后强制预检**，不合格会告诉你用 `recover --yes` 回退
+- 适合"我已经有别的插件，不想让 pnpm 动我的依赖树"的场景
+
+macOS / Linux（手动建联接）：
 
 ```bash
 ln -s "$PWD" ~/.dsh/profiles/desktop/node_modules/dsh-config-manager
@@ -64,6 +82,22 @@ node bin/dcm.mjs serve       # 打开 Web UI
 ```
 
 这正是设计意图：DSH 崩溃时页面内插件加载不了，外部入口才是可靠的那个。
+
+### 卸载
+
+```bash
+dsh plugin remove dsh-config-manager --profile desktop
+```
+
+或用自带脚本（顺序已固化为「先摘 bundles → 再摘 dependencies → 最后删联接」）：
+
+```powershell
+.\scripts\uninstall.ps1
+```
+
+⚠️ **顺序很重要**：如果先删包、后改清单，会出现「`bundles` 声明了但磁盘没有」的
+中间状态，此时 DSH 一启动就硬失败，并把整个 profile 重置成模板。详见
+[为什么需要它](#为什么需要它)。
 
 ### 环境要求
 
