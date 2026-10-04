@@ -1,27 +1,35 @@
-@echo off
-rem dcm.bat — dsh-config-manager launcher (Windows)
+﻿@echo off
+rem dcm.bat - dsh-config-manager launcher (Windows)
 rem
-rem 双击即可打开外部 UI；带参数则当命令行用。
-rem 自动寻找 DSH 内置 node，找不到再退回 PATH 里的 node —— 不写死任何用户路径。
+rem Double-click to open the external UI; pass arguments to use the CLI.
+rem Finds DSH's bundled node first, falls back to node on PATH.
+rem
+rem NOTE: this file MUST be saved as UTF-8 **with BOM** and CRLF.
+rem   cmd.exe reads .bat in the OEM code page (936/GBK on a Chinese Windows).
+rem   Without the BOM the Chinese lines below are decoded as GBK garbage,
+rem   which breaks parsing: the text gets split into bogus tokens and the
+rem   remainder is executed as a command. Same class of bug as .ps1 needs a BOM.
+
+if not "%~1"=="" chcp 65001 >nul
 
 setlocal EnableDelayedExpansion
 
 set "DCM_DIR=%~dp0"
 set "NODE="
 
-rem 1) DSH 内置运行时（首选：版本与 DSH 自身一致，不依赖 PATH）
+rem 1) DSH bundled runtime: version matches DSH itself, no PATH dependency.
 if defined DSH_HOME (
   for /d %%D in ("%DSH_HOME%\dsh-runtimes\*") do (
     if exist "%%~fD\dependencies\node\bin\node.exe" set "NODE=%%~fD\dependencies\node\bin\node.exe"
   )
 )
-rem 2) 缺省 home 下的运行时
+rem 2) default home
 if not defined NODE if exist "%USERPROFILE%\.dsh\dsh-runtimes" (
   for /d %%D in ("%USERPROFILE%\.dsh\dsh-runtimes\*") do (
     if exist "%%~fD\dependencies\node\bin\node.exe" set "NODE=%%~fD\dependencies\node\bin\node.exe"
   )
 )
-rem 3) PATH 里的 node
+rem 3) node on PATH
 if not defined NODE (
   where node >nul 2>nul
   if not errorlevel 1 set "NODE=node"
@@ -29,12 +37,12 @@ if not defined NODE (
 
 if not defined NODE (
   echo.
-  echo 找不到 node。
+  echo [ERROR] node not found.
   echo.
-  echo 本工具需要 Node.js 才能运行。三种解决办法：
-  echo   1^) 确认 DSH 已安装且 DSH_HOME 指向它的主目录；
-  echo   2^) 安装 Node.js ^(https://nodejs.org^) 并加入 PATH；
-  echo   3^) 手动指定：set NODE=C:\path\to\node.exe 后重跑本脚本。
+  echo This tool needs Node.js. Three ways to fix:
+  echo   "1)" Make sure DSH is installed and DSH_HOME points at its home.
+  echo   "2)" Install Node.js from https://nodejs.org and add it to PATH.
+  echo   "3)" Set it manually: set NODE=C:\path\to\node.exe and re-run.
   echo.
   pause
   exit /b 1
@@ -42,13 +50,20 @@ if not defined NODE (
 
 set "DCM=%DCM_DIR%bin\dcm.mjs"
 if not exist "%DCM%" (
-  echo 找不到 %DCM% —— 插件目录不完整，请重新克隆仓库。
+  echo [ERROR] %DCM% not found - incomplete plugin directory, please re-clone.
   pause
   exit /b 1
 )
 
 if "%~1"=="" (
+  rem Double-click path. Must pause on error: otherwise the window
+  rem flashes and vanishes, and the user sees nothing at all.
   "%NODE%" "%DCM%" serve --open
+  if errorlevel 1 (
+    echo.
+    echo [ERROR] failed to start, see the message above.
+    pause
+  )
 ) else (
   "%NODE%" "%DCM%" %*
   if errorlevel 1 pause

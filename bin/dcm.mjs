@@ -26,6 +26,31 @@ import { runAll, SEVERITY } from '../lib/health.mjs'
 import { assess, recover, forensicDiff } from '../lib/crash.mjs'
 import { scanAll, repairFile } from '../lib/sessions.mjs'
 import { listPlugins, preflight, neutralizeMissingBundles } from '../lib/plugins.mjs'
+import { spawn } from 'node:child_process'
+
+/**
+ * 打开默认浏览器。
+ *
+ * 返回 `true`/`false`，**不谎报成功**——调用方据此提示用户手动访问。
+ *
+ * Windows 用 `cmd /c start "" <url>`：第一个引号参数是窗口标题，必须显式
+ * 给空串，否则标题含空格时 `start` 会把 URL 当标题、实际不打开。
+ * macOS 用 `open`，Linux 用 `xdg-open`。
+ */
+function openBrowser(url) {
+  try {
+    if (process.platform === 'win32') {
+      spawn('cmd', ['/c', 'start', '', url], { detached: true, stdio: 'ignore', windowsHide: true }).unref()
+    } else if (process.platform === 'darwin') {
+      spawn('open', [url], { detached: true, stdio: 'ignore' }).unref()
+    } else {
+      spawn('xdg-open', [url], { detached: true, stdio: 'ignore' }).unref()
+    }
+    return true
+  } catch {
+    return false
+  }
+}
 
 /** 极简参数解析：位置参数 + `--key value` / `--flag`。 */
 function parseArgs(argv) {
@@ -269,13 +294,37 @@ switch (command) {
   }
 
   case 'serve': {
+    // 走 ensureServer 而不是直接 startServer：
+    // 端口已被占用时 ensureServer 会识别为「已在跑」并直接返回地址，
+    // 而 startServer 的 server.once('error', reject) 会把 EADDRINUSE 抛成
+    // 未捕获异常 —— 双击 dcm.bat 时窗口一闪而过，看起来就是「开不了」。
+    const { ensureServer, bundledNodeCandidates, urlFor, probeServer } = await import('../lib/spawn-serve.mjs')
     const { startServer } = await import('../lib/server.mjs')
     const port = Number(flags.port ?? 14711)
+
     // `--no-open` 供宿主半区分离式拉起时使用（那边由浏览器自己开带 token 的
-    // URL，服务端再弹一次会开出无 token 的第二个标签页）。默认仍开浏览器，
-    // 保持双击 dcm.bat 的既有行为。
-    const open = flags.open !== false && flags['no-open'] !== true
-    await startServer({ ctx, port, open })
+    // URL，服务端再弹一次会开出无 token 的第二个标签页）。
+    const wantOpen = flags.open !== false && flags['no-open'] !== true
+
+    // 前台模式：已有实例在跑时，就复用它并（按需）打开浏览器，
+    // 而不是让进程带着栈回溯退出。
+    const already = await probeServer(port)
+    if (already) {
+      const { readToken } = await import('../lib/spawn-serve.mjs')
+      const t = readToken(ctx)
+      const url = urlFor(port, t)
+      if (json) { out({ ok: true, alreadyRunning: true, started: false, port, url }); break }
+      console.log('')
+      console.log('  外部配置管理 UI 已经在运行')
+      console.log(`  打开    : ${url}`)
+      console.log('  （本窗口可以关掉；服务器是独立进程）')
+      console.log('')
+      if (wantOpen) openBrowser(url)
+      break
+    }
+
+    // 没有实例 → 前台启动，保持原有行为（控制台横幅 + Ctrl+C 停止）。
+    await startServer({ ctx, port, open: wantOpen })
     break
   }
 
